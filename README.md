@@ -28,12 +28,13 @@ Makes use of:
 usage: Tristan [-h] [--write_out] search_term subreddits [subreddits ...]
 
 positional arguments:
-  search_term
-  subreddits
+  search_term  The term/phrase you're searching for. If there's spaces wrap it
+               in double quotes.
+  subreddits   A list of one or more subreddits to scan for the search term.
 
 optional arguments:
   -h, --help   show this help message and exit
-  --write_out
+  --write_out  Include if you want the results written to a json file.
 ```
 
 ### Execution
