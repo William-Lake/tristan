@@ -10,11 +10,11 @@ def gather_args():
     
     arg_parser = ArgumentParser('Tristan')
     
-    arg_parser.add_argument('--write_out',action='store_true')
+    arg_parser.add_argument('--write_out',action='store_true',help='Include if you want the results written to a json file.')
     
-    arg_parser.add_argument('search_term')
+    arg_parser.add_argument('search_term',help="The term/phrase you're searching for. If there's spaces wrap it in double quotes.")
     
-    arg_parser.add_argument('subreddits',nargs='+')
+    arg_parser.add_argument('subreddits',nargs='+',help='A list of one or more subreddits to scan for the search term.')
     
     args = arg_parser.parse_args()
     
