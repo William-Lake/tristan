@@ -1,5 +1,6 @@
-from argparser import ArgumentParser
+from argparse import ArgumentParser
 import json
+import logging
 import time
 
 from reddit_util import RedditUtil
@@ -7,7 +8,7 @@ from text_analyzer import TextAnalyzer
 
 def gather_args():
     
-    arg_parser = ArgumentParser('RedditReview')
+    arg_parser = ArgumentParser('Tristan')
     
     arg_parser.add_argument('--write_out',action='store_true')
     
@@ -19,8 +20,11 @@ def gather_args():
     
     return args.write_out, args.search_term, args.subreddits
 
-
 if __name__ == '__main__':
+
+    # TODO Create functionality for multiple searches per execution
+
+    logging.basicConfig(level=logging.INFO)
 
     '''
     gather user search term
@@ -42,9 +46,11 @@ if __name__ == '__main__':
     
     text_analyzer = TextAnalyzer()
     
-    scores = text_analyzer.score_relevant_texts(relevant_texts)
+    scores = text_analyzer.score_relevant_texts(relevant_text)
     
     avg_scores = {}
+
+    logging.info('Calculating Average Scores')
 
     for subreddit_name, text_scores in scores.items():
      
@@ -54,7 +60,11 @@ if __name__ == '__main__':
         
     final_avg_score = sum(avg_scores.values()) / len(avg_scores.values())
     
+    # TODO Simplify this process
+    
     if write_out:
+
+        logging.info('Writing collected data to file')
         
         out_data = {}
         
@@ -74,7 +84,13 @@ if __name__ == '__main__':
             
             out_data['subreddit_data'][subreddit_name]['data'] = text_scores
 
-        with open(f'{time.time()}_{search_term}.json') as outfile:
+        file_name = f'{search_term.replace(" ","_")}_'
+
+        file_name += str(time.time()).replace("\\.","_")
+
+        file_name += '.json'
+
+        with open(file_name,'w+') as out_file:
             
             out_file.write(json.dumps(out_data,indent=4))
 

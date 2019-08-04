@@ -1,10 +1,19 @@
+import logging
 from nltk import tokenize
 
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 class TextAnalyzer(object):
 
+    def __init__(self):
+
+        logging.info('Initializing TextAnalyzer')
+
+        self.analyzer = SentimentIntensityAnalyzer()
+
     def score_relevant_texts(self,relevant_text):
+
+        logging.info('Scoring Relevant Text')
         
         scores = {}
         
@@ -18,17 +27,17 @@ class TextAnalyzer(object):
                 
                 scores[subreddit_name][text] = text_score
                 
-                
-                
         return scores
 
     def __score_text(self,text):
+
+        logging.debug(f'Scoring text: {text}')
 
         avg_score = 0
         
         # Converts a chunk of text into individual sentences.
         
-        sentences = tokenize.sent_tokenize(content_text)
+        sentences = tokenize.sent_tokenize(text)
         
         if len(sentences) > 0:
         
@@ -49,6 +58,8 @@ class TextAnalyzer(object):
         else:
         
             avg_score = None
+
+        logging.debug(avg_score)
         
         return avg_score
         

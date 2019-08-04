@@ -6,25 +6,22 @@ import praw
 class RedditUtil(object):
     
     # gather data to analyze
-    # TODO create reddit acct
-    # TODO get reddit acct keys
-    # https://praw.readthedocs.io/en/latest/getting_started/quick_start.html
-
     def __init__(self,target_subreddits):
         
         logging.info('Initializing Reddit Util')
 
-        if os.exists('praw.ini') is False:
+        if os.path.exists('praw.ini') is False:
 
             logging.error('No praw.ini file!')
 
             exit(1)
 
-        self.reddit = praw.Reddit('tristan')
+        # TODO Allow the user to determine this via args
+        self.reddit = praw.Reddit('tristan_bot') 
 
         self.subreddits = [
 
-            reddit.subreddit(target_subreddit)
+            self.reddit.subreddit(target_subreddit)
             for target_subreddit
             in target_subreddits
             
@@ -32,18 +29,35 @@ class RedditUtil(object):
 
     def gather_relevant_text(self,search_term):
 
+        logging.info(f'Gathering relevant text for {search_term}')
+
         relevant_text = {}
 
         for subreddit in self.subreddits:
 
-            relevant_text[subreddit.name] = []
+            logging.debug(f'Gathering text from r/{subreddit.display_name}')
 
+            relevant_text[subreddit.display_name] = []
+
+            # TODO Allow the user to choose the filter length via args
             for submission in subreddit.search(search_term,time_filter='week'):
 
-                relevant_text[subreddit.name].append(submission.title)
+                if search_term in submission.title:
 
-                for top_level_comment in submission.comments:
+                    logging.debug(f'Gathering text from submission "{submission.title}"')
 
-                    relevant_text[subreddit.name].append(top_level_comment.body)
+                    relevant_text[subreddit.display_name].append(submission.title)
+
+                    for top_level_comment in submission.comments:
+
+                        # Happens when the MoreComments object comes up
+                        # TODO Determine if you want to use the additional comments and better handle this
+                        try:
+
+                            relevant_text[subreddit.display_name].append(top_level_comment.body)
+
+                        except:
+
+                            pass
 
         return relevant_text
