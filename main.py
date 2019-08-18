@@ -6,39 +6,26 @@ import time
 from reddit_util import RedditUtil
 from text_analyzer import TextAnalyzer
 
-def gather_args():
+def gather_params():
     
-    arg_parser = ArgumentParser('Tristan')
+    request_json = request.json
     
-    arg_parser.add_argument('--write_out',action='store_true',help='Include if you want the results written to a json file.')
+    #TODO Try/except around these re: KeyErrors
+    subreddits = request_json['subreddits']
     
-    arg_parser.add_argument('search_term',help="The term/phrase you're searching for. If there's spaces wrap it in double quotes.")
+    #TODO Validate subreddits provided
     
-    arg_parser.add_argument('subreddits',nargs='+',help='A list of one or more subreddits to scan for the search term.')
+    search_term = request_json['search_term']
     
-    args = arg_parser.parse_args()
+    #TODO Validate search term
     
-    return args.write_out, args.search_term, args.subreddits
+    return subreddits, search_term
 
-if __name__ == '__main__':
-
-    # TODO Convert to webservice: https://bottlepy.org/docs/dev/
-
-    # TODO Create functionality for multiple searches per execution
-
-    logging.basicConfig(level=logging.INFO)
-
-    '''
-    gather user search term
-    gather data to analyze
-    analyze data
-    write to json
-    print results
-    '''
-
-    # gather user search term
-    write_out, search_term, subreddits = gather_args()
-
+@route('/tristan')
+def analyze():
+    
+    subreddits, search_term = gather_params()
+    
     # gather data to analyze
     reddit_util = RedditUtil(subreddits)
     
@@ -64,36 +51,46 @@ if __name__ == '__main__':
     
     # TODO Simplify this process
 
-    if write_out:
-
-        logging.info('Writing collected data to file')
+    out_data = {}
         
-        out_data = {}
+    out_data['search_term'] = search_term
         
-        out_data['search_term'] = search_term
+    out_data['subreddits'] = subreddits
         
-        out_data['subreddits'] = subreddits
+    out_data['avg_score'] = final_avg_score
         
-        out_data['avg_score'] = final_avg_score
+    out_data['subreddit_data'] = {}
         
-        out_data['subreddit_data'] = {}
-        
-        for subreddit_name, text_scores in scores.items():
+    for subreddit_name, text_scores in scores.items():
             
-            out_data['subreddit_data'][subreddit_name] = {}
+        out_data['subreddit_data'][subreddit_name] = {}
             
-            out_data['subreddit_data'][subreddit_name]['avg_score'] = avg_scores[subreddit_name]
+        out_data['subreddit_data'][subreddit_name]['avg_score'] = avg_scores[subreddit_name]
             
-            out_data['subreddit_data'][subreddit_name]['data'] = text_scores
-
-        file_name = f'{search_term.replace(" ","_")}_'
-
-        file_name += str(time.time()).replace("\\.","_")
-
-        file_name += '.json'
-
-        with open(file_name,'w+') as out_file:
+        out_data['subreddit_data'][subreddit_name]['data'] = text_scores
             
-            out_file.write(json.dumps(out_data,indent=4))
+    response.set_header('Content-Type','application/json')
+    
+    response.body = json.dumps(out_data,indent=4)
+    
+def gather_args():
+    
+    arg_parser = ArgumentParser('Tristan')
+    
+    arg_parser.add_argument('host',default='localhost')
+    
+    arg_parser.add_argument('port',type=int,default=8080)
+    
+    args = arg_parser.parse_args()
+    
+    return args.host, args.port
 
-    print(f'"{search_term}": {final_avg_score}')
+if __name__ == '__main__':
+
+    # TODO Create functionality for multiple searches per request
+
+    logging.basicConfig(level=logging.INFO)
+    
+    host, port = gather_args()
+    
+    run(host=host, port=port)
