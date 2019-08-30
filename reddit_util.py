@@ -44,7 +44,7 @@ class RedditUtil(object):
 
             self.subreddits.append(self.reddit.subreddit(target_subreddit))
 
-    def gather_search_results(self,search_term):
+    def gather_search_results(self,search_term,time_filter):
 
         logging.info(f'Gathering search results for {search_term}.')
 
@@ -55,7 +55,7 @@ class RedditUtil(object):
             logging.debug(f'Gathering text from r/{subreddit.display_name}')
 
             # TODO Allow the user to choose the filter length via args
-            for submission in subreddit.search(search_term,time_filter='week'):
+            for submission in subreddit.search(search_term,time_filter=time_filter):
 
                 if search_term in submission.title:
 

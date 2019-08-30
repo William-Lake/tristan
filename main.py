@@ -62,10 +62,18 @@ def gather_params():
     
     return subreddits, search_term
 
-@route('/tristan/<search_term>/<subreddits>')
-def tristan(search_term,subreddits):
+@route('/tristan/<search_term>/<time_filter>/<subreddits>')
+def tristan(search_term,time_filter,subreddits):
     
     logging.info('Received request.')
+
+    time_filter_options = ['all','day','hour','month','week','year']
+
+    if time_filter not in time_filter_options:
+
+        response.status = 400
+
+        return f'Time filter "{time_filter}" invalid. Options are: {", ".join(time_filter_options)}'
 
     # subreddits, search_term = gather_params()
 
@@ -83,7 +91,7 @@ def tristan(search_term,subreddits):
 
     reddit_util = RedditUtil(subreddits)
     
-    search_results = reddit_util.gather_search_results(search_term)
+    search_results = reddit_util.gather_search_results(search_term,time_filter)
 
     logging.info('Analyzing data.')
 
