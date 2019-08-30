@@ -22,10 +22,6 @@ def gather_args():
 
 if __name__ == '__main__':
 
-    # TODO Convert to webservice: https://bottlepy.org/docs/dev/
-
-    # TODO Create functionality for multiple searches per execution
-
     logging.basicConfig(level=logging.INFO)
 
     '''
@@ -62,8 +58,6 @@ if __name__ == '__main__':
         
     final_avg_score = sum(avg_scores.values()) / len(avg_scores.values())
     
-    # TODO Simplify this process
-
     if write_out:
 
         logging.info('Writing collected data to file')

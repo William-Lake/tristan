@@ -16,7 +16,6 @@ class RedditUtil(object):
 
             exit(1)
 
-        # TODO Allow the user to determine this via args
         self.reddit = praw.Reddit('tristan_bot') 
 
         self.subreddits = [
@@ -39,7 +38,6 @@ class RedditUtil(object):
 
             relevant_text[subreddit.display_name] = []
 
-            # TODO Allow the user to choose the filter length via args
             for submission in subreddit.search(search_term,time_filter='week'):
 
                 if search_term in submission.title:
@@ -51,7 +49,6 @@ class RedditUtil(object):
                     for top_level_comment in submission.comments:
 
                         # Happens when the MoreComments object comes up
-                        # TODO Determine if you want to use the additional comments and better handle this
                         try:
 
                             relevant_text[subreddit.display_name].append(top_level_comment.body)
