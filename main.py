@@ -1,79 +1,167 @@
 from argparse import ArgumentParser
 import json
 import logging
+import os
 import time
+import traceback
+
+from bottle import route, run, request, response
 
 from reddit_util import RedditUtil
 from text_analyzer import TextAnalyzer
 
+def validate_params(subreddits,search_term):
+
+    logging.info('Validating params.')
+    
+    if subreddits is None or search_term is None:
+
+        response.status = 400
+
+        if subreddits is None and search_term is None:
+
+            return 'Neither subreddits nor a search term was provided.'
+
+        elif subreddits is None:
+
+            return "One or more subreddits weren't provided."
+
+        else:
+
+            return "A search term wasn't provided."
+
+    return None
+
 def gather_params():
+
+    logging.info('Gathering Params.')
     
     request_json = request.json
+
+    try:
     
-    #TODO Try/except around these re: KeyErrors
-    subreddits = request_json['subreddits']
+        subreddits = request_json['subreddits']
     
-    #TODO Validate subreddits provided
+    except KeyError as e:
+
+        logging.error('KeyError while trying to gather subreddits from request.')
+
+        subreddits = None
     
-    search_term = request_json['search_term']
+    # TODO Validate the subreddits exist: https://praw.readthedocs.io/en/latest/code_overview/reddit/subreddits.html?highlight=search%20subreddits#praw.models.Subreddits.search_by_name
     
-    #TODO Validate search term
+    try:
+
+        search_term = request_json['search_term']
+
+    except KeyError as e:
+
+        logging.error('KeyError while trying to gather search term from request.')
+
+        search_term = None
     
     return subreddits, search_term
 
-@route('/tristan')
-def analyze():
+@route('/tristan/<search_term>/<subreddits>')
+def tristan(search_term,subreddits):
     
-    subreddits, search_term = gather_params()
+    logging.info('Received request.')
+
+    # subreddits, search_term = gather_params()
+
+    subreddits = subreddits.strip().split(';')
+
+    # error_message = validate_params(subreddits,search_term)
+
+    # if error_message is not None: 
+        
+    #     logging.info(f'There was an issue with the params, returning error message: {error_message}.')
+
+    #     return error_message
     
-    # gather data to analyze
+    logging.info(f'Gathering data from {", ".join(subreddits)} using {search_term}.')
+
     reddit_util = RedditUtil(subreddits)
     
-    relevant_text = reddit_util.gather_relevant_text(search_term)
+    search_results = reddit_util.gather_search_results(search_term)
 
-    # analyze data
-    
+    logging.info('Analyzing data.')
+
     text_analyzer = TextAnalyzer()
     
-    scores = text_analyzer.score_relevant_texts(relevant_text)
-    
-    avg_scores = {}
+    text_analyzer.score_search_results(search_results)
 
-    logging.info('Calculating Average Scores')
+    logging.info('Averaging Scores.')
 
-    for subreddit_name, text_scores in scores.items():
-     
-        avg_score = sum(text_scores.values()) / len(text_scores.values())
-        
-        avg_scores[subreddit_name] = avg_score
-        
-    final_avg_score = sum(avg_scores.values()) / len(avg_scores.values())
-    
-    # TODO Simplify this process
+    search_result_scores = [
+        search_result.sentiment_score
+        for search_result
+        in search_results
+    ]
 
-    out_data = {}
-        
-    out_data['search_term'] = search_term
-        
-    out_data['subreddits'] = subreddits
-        
-    out_data['avg_score'] = final_avg_score
-        
-    out_data['subreddit_data'] = {}
-        
-    for subreddit_name, text_scores in scores.items():
-            
-        out_data['subreddit_data'][subreddit_name] = {}
-            
-        out_data['subreddit_data'][subreddit_name]['avg_score'] = avg_scores[subreddit_name]
-            
-        out_data['subreddit_data'][subreddit_name]['data'] = text_scores
-            
+    reddit_scores = [
+        search_result.score
+        for search_result
+        in search_results
+    ]
+
+    avg_score = sum(search_result_scores) / len(search_result_scores)
+
+    avg_reddit_score = sum(reddit_scores) / len(reddit_scores)
+
+    logging.info('Constructing return json.')
+
+    out_data = {
+        'search_term':search_term,
+        'subreddits':subreddits,
+        'avg_score':avg_score,
+        'avg_reddit_score':avg_reddit_score,
+        'subreddit_data':{}
+    }
+
+    subreddit_names = set([
+        search_result.source_subreddit
+        for search_result
+        in search_results
+    ])
+
+    for subreddit_name in subreddit_names:
+
+        out_data['subreddit_data'][subreddit_name] = []
+
+        related_search_results = [
+            search_result
+            for search_result
+            in search_results
+            if search_result.source_subreddit == subreddit_name
+        ]
+
+        for related_search_result in related_search_results:
+
+            search_result_info = {
+                'sentiment_score':related_search_result.sentiment_score,
+                'target_content':related_search_result.target_content,
+                'reddit_score':related_search_result.score,
+                'upvote_ratio':(related_search_result.upvote_ratio if related_search_result.is_submission else 'N/A'),
+                'post_or_comment':('post' if related_search_result.is_submission else 'comment'),
+                'author':related_search_result.author,
+                'source_subreddit':related_search_result.source_subreddit,
+                'created_utc':related_search_result.created_utc,
+                'permalink':related_search_result.permalink
+            }
+
+            out_data['subreddit_data'][subreddit_name].append(search_result_info)
+
     response.set_header('Content-Type','application/json')
     
-    response.body = json.dumps(out_data,indent=4)
+    return json.dumps(out_data,indent=4)
     
 def gather_args():
+    '''
+    Gathers the command line args provdied at startup via argparse.
+    '''
+
+    # TODO Consider providing praw.ini here
     
     arg_parser = ArgumentParser('Tristan')
     
@@ -92,5 +180,11 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     
     host, port = gather_args()
+
+    if os.path.exists('praw.ini') is False:
+
+        logging.error('No praw.ini file in current directory!')
+
+        exit(1)
     
     run(host=host, port=port)

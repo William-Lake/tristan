@@ -11,56 +11,36 @@ class TextAnalyzer(object):
 
         self.analyzer = SentimentIntensityAnalyzer()
 
-    def score_relevant_texts(self,relevant_text):
+    def score_search_results(self,search_results):
 
-        logging.info('Scoring Relevant Text')
-        
-        scores = {}
-        
-        for subreddit_name, texts in relevant_text.items():
-            
-            scores[subreddit_name] = {}
-            
-            for text in texts:
-                
-                text_score = self.__score_text(text)
-                
-                scores[subreddit_name][text] = text_score
-                
-        return scores
+        logging.info(f'Scoring {len(search_results)} Search Results')
 
+        for search_result in search_results:
+
+            search_result.sentiment_score = self.__score_text(search_result.target_content)
+        
     def __score_text(self,text):
 
         logging.debug(f'Scoring text: {text}')
 
-        avg_score = 0
+        avg_score = None
         
         # Converts a chunk of text into individual sentences.
         
         sentences = tokenize.sent_tokenize(text)
         
-        if len(sentences) > 0:
+        if sentences:
         
-            total_score = 0
-            
-            # Score each sentence in the text individually.
-            
             # The polarity_scores method returns a variety of values, 'compound' is the composite of them all.
-            
-            for sentence in sentences: 
-            
-                total_score += self.analyzer.polarity_scores(sentence)['compound']
+            sentence_scores = [
+                self.analyzer.polarity_scores(sentence)['compound']
+                for sentence
+                in sentences
+            ]
             
             # Average all the sentence scores.
-            
-            avg_score = total_score / len(sentences)
+            avg_score = sum(sentence_scores) / len(sentence_scores)
                  
-        else:
-        
-            avg_score = None
-
         logging.debug(avg_score)
         
         return avg_score
-        
-        
