@@ -54,12 +54,25 @@ if __name__ == '__main__':
 
     for subreddit_name, text_scores in scores.items():
      
-        avg_score = sum(text_scores.values()) / len(text_scores.values())
+        if text_scores.values():
+
+            avg_score = sum(text_scores.values()) / len(text_scores.values())
+
+        else:
+
+            # Is this the right move?
+            avg_score = 0
         
-        # FIXME ZeroDivisionError
         avg_scores[subreddit_name] = avg_score
-        
-    final_avg_score = sum(avg_scores.values()) / len(avg_scores.values())
+    
+    if avg_scores:
+
+        final_avg_score = sum(avg_scores.values()) / len(avg_scores.values())
+
+    else:
+
+        # Is this the right move?
+        final_avg_score = 0
     
     # TODO Simplify this process
 
