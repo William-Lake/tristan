@@ -22,8 +22,6 @@ def gather_args():
 
 if __name__ == '__main__':
 
-    # TODO Convert to webservice: https://bottlepy.org/docs/dev/
-
     # TODO Create functionality for multiple searches per execution
 
     logging.basicConfig(level=logging.INFO)
@@ -58,6 +56,7 @@ if __name__ == '__main__':
      
         avg_score = sum(text_scores.values()) / len(text_scores.values())
         
+        # FIXME ZeroDivisionError
         avg_scores[subreddit_name] = avg_score
         
     final_avg_score = sum(avg_scores.values()) / len(avg_scores.values())
