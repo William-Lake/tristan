@@ -7,7 +7,7 @@ from tqdm import tqdm
 class RedditUtil(object):
     
     # gather data to analyze
-    def __init__(self,target_subreddits):
+    def __init__(self):
         
         logging.info('Initializing Reddit Util')
 
@@ -20,25 +20,13 @@ class RedditUtil(object):
         # TODO Allow the user to determine this via args
         self.reddit = praw.Reddit('tristan_bot') 
 
-        self.subreddits = [
-
-            self.reddit.subreddit(target_subreddit)
-            for target_subreddit
-            in target_subreddits
-            
-        ]
-
-    def gather_relevant_text(self,search_term):
-
-        logging.info(f'Gathering relevant text for {search_term}')
+    def gather_relevant_text(self,subreddits,search_term):
 
         relevant_text = {}
 
-        for subreddit in tqdm(self.subreddits,leave=False,desc='Subreddits'):
+        for subreddit in tqdm(subreddits,leave=False,desc='Subreddits'):
 
-            logging.debug(f'Gathering text from r/{subreddit.display_name}')
-
-            relevant_text[subreddit.display_name] = []
+            relevant_text[subreddit] = []
 
             submissions = subreddit.search(search_term,time_filter='week')
 
@@ -48,9 +36,7 @@ class RedditUtil(object):
                 # Is this what you want?
                 if search_term in submission.title:
 
-                    logging.debug(f'Gathering text from submission "{submission.title}"')
-
-                    relevant_text[subreddit.display_name].append(submission.title)
+                    relevant_text[subreddit].append(submission.title)
 
                     for top_level_comment in tqdm(submission.comments, leave=False, desc='Submission Comments'):
 
@@ -58,10 +44,25 @@ class RedditUtil(object):
                         # TODO Determine if you want to use the additional comments and better handle this
                         try:
 
-                            relevant_text[subreddit.display_name].append(top_level_comment.body)
+                            relevant_text[subreddit].append(top_level_comment.body)
 
                         except:
 
                             pass
 
         return relevant_text
+
+
+    def gather_subreddits(self,query_subreddits,subreddit_cache):
+
+        subreddits = []
+
+        for subreddit in query_subreddits:
+
+            if subreddit not in subreddit_cache.keys():
+
+                subreddit_cache[subreddit] = self.reddit.subreddit(subreddit)
+
+            subreddits.append(subreddit_cache[subreddit])        
+
+        return subreddits

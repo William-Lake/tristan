@@ -4,60 +4,35 @@ import json
 import logging
 import time
 
+from bottle import post, request, run, abort, response
+from tqdm import tqdm
+
 from reddit_util import RedditUtil
 from text_analyzer import TextAnalyzer
 
-def gather_args():
-    
-    arg_parser = ArgumentParser('Tristan')
-    
-    arg_parser.add_argument('--do_write_out',action='store_true',help='Include if you want the results written to a json file.')
-    
-    arg_parser.add_argument('search_term',help="The term/phrase you're searching for. If there's spaces wrap it in double quotes.")
-    
-    arg_parser.add_argument('subreddits',nargs='+',help='A list of one or more subreddits to scan for the search term.')
-    
-    args = arg_parser.parse_args()
-    
-    return args.do_write_out, args.search_term, args.subreddits
 
-if __name__ == '__main__':
+def gather_subreddit_data(scores,avg_scores):
 
-    # TODO Create functionality for multiple searches per execution
+    return {
+        subreddit.display_name: {
+            'avg_score':avg_scores[subreddit.display_name] if subreddit.display_name in avg_scores.keys() else "No Scores!",
+            'data':text_scores
+        }
+        for subreddit, text_scores
+        in scores.items()
+    }
 
-    logging.basicConfig(level=logging.INFO)
+def gather_score_data(scores):
 
-    '''
-    gather user search term
-    gather data to analyze
-    analyze data
-    write to json
-    print results
-    '''
-
-    # gather user search term
-    do_write_out, search_term, subreddits = gather_args()
-
-    # gather data to analyze
-    reddit_util = RedditUtil(subreddits)
-    
-    relevant_text = reddit_util.gather_relevant_text(search_term)
-
-    # analyze data
-    
-    text_analyzer = TextAnalyzer()
-    
-    scores = text_analyzer.score_relevant_texts(relevant_text)
-    
     avg_scores = {}
 
-    logging.info('Calculating Average Scores')
+    for subreddit, text_scores in scores.items():
+    
+        scores = [s for s in text_scores.values() if s is not None]
 
-    for subreddit_name, text_scores in scores.items():
-     
-        if text_scores.values():
+        if scores:
 
-            avg_scores[subreddit_name] = sum(text_scores.values()) / len(text_scores.values())
+            avg_scores[subreddit.display_name] = sum(scores) / len(scores)
 
     if avg_scores:
 
@@ -65,33 +40,71 @@ if __name__ == '__main__':
 
     else:
 
-        final_avg_score = 'No data found to create scores from!'
+        final_avg_score = 'No data found to create scores from!'    
+
+    return avg_scores, final_avg_score
+
+if __name__ == '__main__':
+
+    logging.basicConfig(level=logging.INFO)
+
+    text_analyzer = TextAnalyzer()
+
+    reddit_util = RedditUtil()
+
+    @post('/tristan')
+    def search():
+
+        search_json = request.json
+
+        if search_json:
+
+            if 'queries' in search_json.keys():
+
+                results = []
+
+                subreddit_cache = {}
+
+                for query in tqdm(search_json['queries'],leave=False,desc='Queries'):
+
+                    result = {
+                        'query':query
+                    }
+
+                    if 'subreddits' not in query.keys():
+
+                        result['error'] = 'Query doesn\'t contain subreddits.'
+
+                    elif 'search_text' not in query.keys():
+
+                        result['error'] = 'Query doesn\'t contain search_text.'
+
+                    else:
+
+                        subreddits = reddit_util.gather_subreddits(query['subreddits'],subreddit_cache)
+
+                        relevant_texts = reddit_util.gather_relevant_text(subreddits,query['search_text'])
+
+                        scores = text_analyzer.score_relevant_texts(relevant_texts)
+                        
+                        avg_scores, final_avg_score = gather_score_data(scores)
+
+                        subreddit_data = gather_subreddit_data(scores,avg_scores)
+
+                        result.update({
+                            'avg_score':final_avg_score,
+                            'avg_scores':avg_scores,
+                            'subreddit_data':subreddit_data
+                        })
+                        
+                    results.append(result)  
+
+                response.set_header('Content-Type','application/json')
+
+                return json.dumps(results,indent=4)
+        else:
+
+            abort(400,'Something\'s up, doc. Probably a json issue.')
+
+    run(port=9010)
     
-    if do_write_out:
-
-        logging.info('Writing collected data to file')
-        
-        out_data = {
-            'search_term':search_term,
-            'subreddits':subreddits,
-            'avg_score':final_avg_score
-        }
-
-        subreddit_data = {}
-        
-        for subreddit_name, text_scores in scores.items():
-
-            subreddit_data[subreddit_name] = {
-                'avg_score':avg_scores[subreddit_name],
-                'data':text_scores
-            }
-
-        out_data['subreddit_data'] = subreddit_data
-            
-        file_name = f'{search_term.replace(" ","_")}_{datetime.today().__str__()}.json'
-
-        with open(file_name,'w+') as out_file:
-            
-            out_file.write(json.dumps(out_data,indent=4))
-
-    print(f'"{search_term}": {final_avg_score}')
