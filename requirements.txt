@@ -3,3 +3,4 @@ praw
 vaderSentiment
 tqdm
 bottle
+textblob

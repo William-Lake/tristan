@@ -1,15 +1,10 @@
 import logging
-from nltk import tokenize
 
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from textblob import TextBlob
+
+
 
 class TextAnalyzer(object):
-
-    def __init__(self):
-
-        logging.info('Initializing TextAnalyzer')
-
-        self.analyzer = SentimentIntensityAnalyzer()
 
     def score_relevant_texts(self,relevant_text):
 
@@ -26,21 +21,19 @@ class TextAnalyzer(object):
     def __score_text(self,text):
 
         avg_score = None
-        
-        # Converts a chunk of text into individual sentences.
-        
-        sentences = tokenize.sent_tokenize(text)
-        
-        if len(sentences) > 0:
-        
+
+        blob = TextBlob(text)
+
+        sentences = blob.sentences
+
+        if sentences:
+
             total_score = sum([
-                self.analyzer.polarity_scores(sentence)['compound']
+                sentence.sentiment.polarity
                 for sentence
                 in sentences
             ])
-            
+
             avg_score = total_score / len(sentences)
-                 
+
         return avg_score
-        
-        
