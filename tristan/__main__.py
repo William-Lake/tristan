@@ -57,23 +57,15 @@ if __name__ == '__main__':
      
         if text_scores.values():
 
-            avg_score = sum(text_scores.values()) / len(text_scores.values())
+            avg_scores[subreddit_name] = sum(text_scores.values()) / len(text_scores.values())
 
-        else:
-
-            # Is this the right move?
-            avg_score = 0
-        
-        avg_scores[subreddit_name] = avg_score
-    
     if avg_scores:
 
         final_avg_score = sum(avg_scores.values()) / len(avg_scores.values())
 
     else:
 
-        # Is this the right move?
-        final_avg_score = 0
+        final_avg_score = 'No data found to create scores from!'
     
     if do_write_out:
 

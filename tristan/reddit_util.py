@@ -2,6 +2,7 @@ import logging
 import os
 
 import praw
+from tqdm import tqdm
 
 class RedditUtil(object):
     
@@ -33,22 +34,25 @@ class RedditUtil(object):
 
         relevant_text = {}
 
-        for subreddit in self.subreddits:
+        for subreddit in tqdm(self.subreddits,leave=False,desc='Subreddits'):
 
             logging.debug(f'Gathering text from r/{subreddit.display_name}')
 
             relevant_text[subreddit.display_name] = []
 
-            # TODO Allow the user to choose the filter length via args
-            for submission in subreddit.search(search_term,time_filter='week'):
+            submissions = subreddit.search(search_term,time_filter='week')
 
+            # TODO Allow the user to choose the filter length via args
+            for submission in tqdm(submissions,leave=False,desc=f'{subreddit} results'):
+
+                # Is this what you want?
                 if search_term in submission.title:
 
                     logging.debug(f'Gathering text from submission "{submission.title}"')
 
                     relevant_text[subreddit.display_name].append(submission.title)
 
-                    for top_level_comment in submission.comments:
+                    for top_level_comment in tqdm(submission.comments, leave=False, desc='Submission Comments'):
 
                         # Happens when the MoreComments object comes up
                         # TODO Determine if you want to use the additional comments and better handle this
