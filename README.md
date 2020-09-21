@@ -45,7 +45,7 @@ Hit Ctrl-C to quit.
 
 ### Calling Tristan
 
-There's only one endpoint `/tristan` which excepts POST requests with a json body containing a list of queries. Each query is formatted like so:
+There's only one endpoint `/tristan` which accepts POST requests with a json body containing a list of queries. Each query is formatted like so:
 
 ```json
     {
@@ -57,7 +57,7 @@ There's only one endpoint `/tristan` which excepts POST requests with a json bod
     }
 ```
 
-Each query is provided as one element in a json array whose key value in the global Json object is "queries":
+Each query is provided as one element in the json array with the key "queries":
 
 ```json
 {
@@ -65,7 +65,7 @@ Each query is provided as one element in a json array whose key value in the glo
     {
       "subreddits": [
         "NameofSubredditToSearchForInTheFirstQuery",
-        "ToUseWhenSearchingForYourText"
+        "AnotherSubredditName"
       ],
       "search_text":"This is the text to search for in the first query."
     },
@@ -87,14 +87,14 @@ The returned content is a Json Array. Each entry in the array is a json object f
         "query": { 
           "subreddits": [
             "AListOfSubredditNames",
-            "AnotherSubredditName"
+            "ToUseWhenSearchingForYourText"
           ],
-          "search_text":"This is the text to search for in the second query."
+          "search_text":"The text to search the subreddits for."
         },
         "avg_score": -0.075,
         "avg_scores": {
             "AListOfSubredditNames": 0.15,
-            "AnotherSubredditName": -0.3 
+            "ToUseWhenSearchingForYourText": -0.3 
         },
         "subreddit_data": {
             "AListOfSubredditNames": {
@@ -104,7 +104,7 @@ The returned content is a Json Array. Each entry in the array is a json object f
                     "Second Sentence": 0.2
                 }
             },
-            "AnotherSubredditName": {
+            "ToUseWhenSearchingForYourText": {
                 "avg_score": 0.05,
                 "data": {
                     "First Sentence": -0.3,
