@@ -44,9 +44,19 @@ def gather_score_data(scores):
 
     return avg_scores, final_avg_score
 
+def gather_args():
+
+    arg_parser = ArgumentParser()
+
+    arg_parser.add_argument('--port',type=int,nargs='?',default=9010,help='The port to run tristan on.')
+
+    return arg_parser.parse_args().port
+
 if __name__ == '__main__':
 
     logging.basicConfig(level=logging.INFO)
+
+    port = gather_args()
 
     text_analyzer = TextAnalyzer()
 
@@ -106,5 +116,5 @@ if __name__ == '__main__':
 
             abort(400,'Something\'s up, doc. Probably a json issue.')
 
-    run(port=9010)
+    run(port=port)
     
