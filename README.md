@@ -16,7 +16,14 @@ Makes use of:
 
 ## Usage
 
-*NOTE THAT* tristan will not work as is. See the section **Making tristan your own** for more info.
+*NOTE THAT* tristan will not work as is.
+
+To make tristan your own:
+
+1. Create a reddit account.
+2. Follow reddit's quick steps for creating an app: https://github.com/reddit-archive/reddit/wiki/OAuth2-Quick-Start-Example#first-steps
+3. Alter praw.ini, adding in your own account's data and name.
+4. Perform a find/replace on the code base, looking for 'tristan_bot' and replacing it with the name you provided in square brackets in praw.ini.
 
 ### Install
 
@@ -234,11 +241,17 @@ Returns:
 ]
 ```
 
-## Making tristan your own
+To filter results by time filter, add a time_filter to your query like so:
 
-To make tristan your own:
+```json
+    {
+      "subreddits": [
+        "AListOfSubredditNames",
+        "ToUseWhenSearchingForYourText"
+      ],
+      "search_text":"The text to search the subreddits for.",
+      "time_filter":"week"
+    }
+```
 
-1. Create a reddit account.
-2. Follow reddit's quick steps for creating an app: https://github.com/reddit-archive/reddit/wiki/OAuth2-Quick-Start-Example#first-steps
-3. Alter praw.ini, adding in your own account's data and name.
-4. Perform a find/replace on the code base, looking for 'tristan_bot' and replacing it with the name you provided in square brackets in praw.ini.
+Available options are 'hour','day','week','month','year','all' and the default if not provided is 'week'.

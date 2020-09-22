@@ -20,7 +20,7 @@ class RedditUtil(object):
         # TODO Allow the user to determine this via args
         self.reddit = praw.Reddit('tristan_bot') 
 
-    def gather_relevant_text(self,subreddits,search_term):
+    def gather_relevant_text(self,subreddits,search_term,time_filter):
 
         relevant_text = {}
 
@@ -28,7 +28,7 @@ class RedditUtil(object):
 
             relevant_text[subreddit] = []
 
-            submissions = subreddit.search(search_term,time_filter='week')
+            submissions = subreddit.search(search_term,time_filter=time_filter)
 
             # TODO Allow the user to choose the filter length via args
             for submission in tqdm(submissions,leave=False,desc=f'{subreddit} results'):

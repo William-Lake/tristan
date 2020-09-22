@@ -93,7 +93,9 @@ if __name__ == '__main__':
 
                         subreddits = reddit_util.gather_subreddits(query['subreddits'],subreddit_cache)
 
-                        relevant_texts = reddit_util.gather_relevant_text(subreddits,query['search_text'])
+                        time_filter = query['time_filter'].lower() if 'time_filter' in query.keys() and query['time_filter'].lower() in ['all','day','hour','month','week','year'] else 'week'
+
+                        relevant_texts = reddit_util.gather_relevant_text(subreddits,query['search_text'],time_filter)
 
                         scores = text_analyzer.score_relevant_texts(relevant_texts)
                         
